@@ -228,8 +228,8 @@ _دريافت لينک هاي ذخيره شده توسط ربات_
 */contactlist*
 _دريافت مخاطبان ذخيره شده توسط ربات_
 		
-crack and open by @sajjad_021
-join to the channel @tgMember
+*crack and open by @sajjad_021*
+_join to the channel @tgMember_
 		
 ]]
     return text
@@ -268,7 +268,7 @@ if msg.text:match("^[!/#]panel$") and is_sudo(msg) then
         else
           local text = [[
 _اطلاعات ربات_ 
-دیکامپایل و ویرایش شده توسط @sajjad_021
+*open and edit by @sajjad_021*
 					
 _تعداد کاربران_ : ]] .. pvs .. [[
           
