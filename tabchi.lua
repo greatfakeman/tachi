@@ -414,6 +414,23 @@ _پیام_ :
     end
     return "_پیام شما فوروارد شد_"
   end
+ if msg.text:match("^[!/#]fwd gps$") and msg.reply_to_message_id_ and is_sudo(msg) then
+    local all = redis:smembers("tabchi:" .. tabchi_id .. ":groups")
+    local id = msg.reply_to_message_id_
+    for i = 1, #all do
+      tdcli_function({
+        ID = "ForwardMessages",
+        chat_id_ = all[i],
+        from_chat_id_ = msg.chat_id_,
+        message_ids_ = {
+          [0] = id
+        },
+        disable_notification_ = 0,
+        from_background_ = 1
+      }, dl_cb, nil)
+    end
+    return "_پیام شما برای همه_ #گروها _فوروارد شد_"
+  end
   if msg.text:match("^[!/#]fwd sgps$") and msg.reply_to_message_id_ and is_sudo(msg) then
     tdcli.searchPublicChat("TgGuard")
     tdcli.unblockUser(180191663)
@@ -478,6 +495,14 @@ _پیام_ :
     end
   end
   do
+  local matches = {
+      msg.text:match("[!/#](echo) (.*)")
+    }
+    if msg.text:match("^[!/#]echo") and is_sudo(msg) and #matches == 2 then
+      tdcli.sendMessage(msg.chat_id_, msg.id_, 0, matches[2], 0, "md")
+    end
+  end
+end
 function add(chat_id_)
   local chat_type = chat_type(chat_id_)
   if chat_type == "channel" then
